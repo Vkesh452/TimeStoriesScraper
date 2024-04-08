@@ -1,0 +1,74 @@
+package com.anudip.Practice2;
+
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class TimeStoriesScraper {
+    public static void main(String[] args) {
+        List<JSONObject> stories = getTimeStories();
+        if (stories != null) {
+            for (JSONObject story : stories) {
+                System.out.println(story);
+            }
+        }
+    }
+
+    public static List<JSONObject> getTimeStories() {
+        List<JSONObject> stories = new ArrayList<>();
+        try {
+            
+            URL url = new URL("https://time.com/");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+           
+            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder htmlContent = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                htmlContent.append(line);
+            }
+            reader.close();
+
+            
+            Document doc = Jsoup.parse(htmlContent.toString());
+
+           
+            Elements latestStories = doc.select("section.latest article");
+
+           
+            int count = 0;
+            for (Element story : latestStories) {
+               
+                String title = story.select("h3").text().trim();
+                String link = story.select("a").attr("href");
+
+               
+                JSONObject storyObject = new JSONObject();
+                storyObject.put("title", title);
+                storyObject.put("link", link);
+
+               
+                stories.add(storyObject);
+
+          
+                if (++count == 6) {
+                    break;
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return stories;
+    }
+}
+
+
